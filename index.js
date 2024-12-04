@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const {db,graphbuilder} = require('./db');
+const extractJSON = require('./extractJSON')
 const app = express();
 const dijkstra = require('./dijkstra');
 
@@ -55,10 +56,10 @@ app.get('/', async (req, res) =>  {if (!graph) {
       }
     }
 
-    // Close the connection
+    // Close the connectio
     await connection.end();
 
-    // Send the response
+    // Send the re
     res.send(stringArray);
     
   } catch (err) {
@@ -67,7 +68,17 @@ app.get('/', async (req, res) =>  {if (!graph) {
   }
 });
 
+app.get('/rooms/',async (req,res) => {
+  const connection = await db();
+
+  const [result] = await connection.query(`select * from rooms`);
+  console.log(result)
+  res.send(result)
+
+})
+
 const PORT = 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+   
