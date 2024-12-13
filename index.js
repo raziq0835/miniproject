@@ -39,20 +39,23 @@ app.get('/', async (req, res) =>  {if (!graph) {
     const { path, distance } = dijkstra(graph, start, end);
 
     let stringArray = [];
+    let dirArray = [];
 
     // Get the database connection
     const connection = await db();
 
     for (let i = 0; i < path.length - 1; i++) {
       const [rows] = await connection.query(
-        `SELECT instruction FROM connections WHERE source_room = ? AND destination_room = ?`,
+        `SELECT instruction,direction FROM connections WHERE source_room = ? AND destination_room = ?`,
         [path[i], path[i + 1]]
       );
 
       if (rows.length > 0) {
         stringArray.push(rows[0].instruction); // Assuming `instruction` is a single field
+        dirArray.push(rows[0].direction);
       } else {
         stringArray.push(`No instruction found for ${path[i]} to ${path[i + 1]}`);
+        dirArray.push(0);
       }
     }
 
@@ -60,7 +63,11 @@ app.get('/', async (req, res) =>  {if (!graph) {
     await connection.end();
 
     // Send the re
-    res.send(stringArray);
+    res.send({
+      instructions: stringArray,
+      directions: dirArray,
+      distance,
+    });
     
   } catch (err) {
     console.error("Error running Dijkstra:", err);
