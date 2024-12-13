@@ -1,17 +1,16 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const {db,graphbuilder} = require('./db');
-const extractJSON = require('./extractJSON')
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const { db, graphbuilder } = require("./db");
+const extractJSON = require("./extractJSON");
 const app = express();
-const dijkstra = require('./dijkstra');
+const dijkstra = require("./dijkstra");
 
 app.use(cors());
 app.use(bodyParser.json());
 
 let graph = null;
 
-//  the graph once the server starts
 (async () => {
   try {
     graph = await graphbuilder();
@@ -21,11 +20,8 @@ let graph = null;
   }
 })();
 
-
-
-
-
-app.get('/', async (req, res) =>  {if (!graph) {
+app.get("/", async (req, res) => {
+  if (!graph) {
     return res.status(500).send("Graph not initialized.");
   }
 
@@ -33,15 +29,11 @@ app.get('/', async (req, res) =>  {if (!graph) {
   const end = parseInt(req.query.end, 10) || 5;
 
   try {
-    
-
-    // Run Dijkstra's algorithm
     const { path, distance } = dijkstra(graph, start, end);
 
     let stringArray = [];
     let dirArray = [];
 
-    // Get the database connection
     const connection = await db();
 
     for (let i = 0; i < path.length - 1; i++) {
@@ -51,41 +43,38 @@ app.get('/', async (req, res) =>  {if (!graph) {
       );
 
       if (rows.length > 0) {
-        stringArray.push(rows[0].instruction); // Assuming `instruction` is a single field
+        stringArray.push(rows[0].instruction);
         dirArray.push(rows[0].direction);
       } else {
-        stringArray.push(`No instruction found for ${path[i]} to ${path[i + 1]}`);
+        stringArray.push(
+          `No instruction found for ${path[i]} to ${path[i + 1]}`
+        );
         dirArray.push(0);
       }
     }
 
-    // Close the connectio
     await connection.end();
 
-    // Send the re
     res.send({
       instructions: stringArray,
       directions: dirArray,
       distance,
     });
-    
   } catch (err) {
     console.error("Error running Dijkstra:", err);
     res.status(500).send("Error calculating shortest path.");
   }
 });
 
-app.get('/rooms/',async (req,res) => {
+app.get("/rooms/", async (req, res) => {
   const connection = await db();
 
   const [result] = await connection.query(`select * from rooms`);
-  console.log(result)
-  res.send(result)
-
-})
+  console.log(result);
+  res.send(result);
+});
 
 const PORT = 5000;
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
-   
