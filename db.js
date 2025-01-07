@@ -5,7 +5,7 @@ const db = async () => {
     const connection = await mysql.createConnection({
       host: "localhost",
       user: "root",
-      password: "r@/!?@~l@m001",
+      password: "",
       database: "indore_navigation",
     });
     return connection;
